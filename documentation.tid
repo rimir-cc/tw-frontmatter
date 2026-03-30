@@ -1,0 +1,10 @@
+title: $:/plugins/rimir/frontmatter/documentation
+
+<$list filter="[[$:/plugins/rimir/doc-template/documentation-tab]is[tiddler]]" variable="ignore">
+{{$:/plugins/rimir/doc-template/documentation-tab}}
+</$list>
+<$list filter="[[$:/plugins/rimir/doc-template/documentation-tab]!is[tiddler]]" variable="ignore">
+
+> ''doc-template'' plugin is not installed. Please refer to the //readme// tab for documentation.
+
+</$list>

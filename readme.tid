@@ -1,0 +1,38 @@
+title: $:/plugins/rimir/frontmatter/readme
+
+! Frontmatter
+
+Store tiddler metadata as YAML frontmatter directly inside `.md` files — no `.meta` sidecar needed.
+
+!! How it works
+
+Set a tiddler's type to `text/x-frontmattered-markdown`. On save, the tiddler is written as a single `.md` file with YAML frontmatter:
+
+```
+---
+title: My Tiddler
+tags:
+  - documentation
+  - example
+created: "20260330120000000"
+modified: "20260330120000000"
+type: text/x-frontmattered-markdown
+---
+
+# Markdown content here
+```
+
+Existing `text/x-markdown` tiddlers are unaffected and continue to use `.meta` sidecars.
+
+!! Features
+
+* YAML frontmatter with `---` delimiters
+* Tags and list fields serialized as YAML arrays
+* Automatic cleanup of orphaned `.meta` files when migrating
+* Works with filesystem-watcher for live external edits
+* Renders identically to regular markdown tiddlers
+
+!! Prerequisites
+
+* TiddlyWiki 5.3.0+ (Node.js server edition)
+* The official `tiddlywiki/markdown` plugin (for rendering)

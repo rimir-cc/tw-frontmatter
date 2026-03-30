@@ -1,0 +1,3 @@
+module-type: parser
+title: $:/plugins/rimir/frontmatter/parser.js
+type: application/javascript

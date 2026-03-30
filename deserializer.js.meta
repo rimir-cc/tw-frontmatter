@@ -1,0 +1,3 @@
+module-type: tiddlerdeserializer
+title: $:/plugins/rimir/frontmatter/deserializer.js
+type: application/javascript

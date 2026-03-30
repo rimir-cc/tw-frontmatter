@@ -1,0 +1,4 @@
+title: $:/plugins/rimir/frontmatter/changelog
+
+|!Version |!Date |!Changes |
+|0.1.0 |2026-03-30 |Initial release: YAML frontmatter for markdown files |

@@ -1,0 +1,6 @@
+title: $:/plugins/rimir/frontmatter/settings
+caption: Frontmatter
+
+This plugin has no configurable settings.
+
+To use frontmatter for a markdown tiddler, set its type to `text/x-frontmattered-markdown`.
