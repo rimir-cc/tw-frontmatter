@@ -77,7 +77,7 @@ exports.serialize = function(fields) {
 	var keys = Object.keys(fields).sort();
 	for(var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		if(key === "text" || key === "bag") {
+		if(key === "title" || key === "text" || key === "type" || key === "bag") {
 			continue;
 		}
 		var value = fields[key];
