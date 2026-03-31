@@ -1,0 +1,49 @@
+created: 20260331120000000
+modified: 20260331120000000
+rdt.hub-category: infrastructure
+rdt.hub-category-name: Infrastructure
+rdt.hub-order: 2
+rdt.order: 1
+rdt.plugin-key: frontmatter
+rdt.plugin-name: frontmatter
+rdt.plugin-subtitle: YAML frontmatter for markdown files
+rdt.section: Overview
+title: $:/plugins/rimir/frontmatter/doc/overview
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! What it does
+
+The frontmatter plugin lets `.md` files carry their tiddler metadata as YAML frontmatter instead of requiring `.meta` sidecar files. This makes markdown files self-contained and compatible with external tools (Claude Code, VS Code, Obsidian, etc.) that understand YAML frontmatter natively.
+
+!! How it works
+
+When a tiddler has type `text/x-frontmattered-markdown`, it is saved to disk as:
+
+```
+---
+tags:
+  - documentation
+  - example
+created: "20260330120000000"
+modified: "20260330120000000"
+type: text/x-frontmattered-markdown
+---
+
+# Markdown content here
+```
+
+At boot, the startup module auto-detects ''any'' `.md` file with a `---` YAML frontmatter block and re-parses it — no explicit type annotation needed. This means external tools can create `.md` files with frontmatter and TiddlyWiki will pick them up automatically.
+
+!! Key design decisions
+
+* ''Auto-detect over opt-in'' — any `.md` with frontmatter is re-parsed, not just files with `text/x-frontmattered-markdown`
+* ''Syncer suppression'' — change events are suppressed during re-parse to prevent the syncer from deleting originals and re-saving in TW format
+* ''Two-pass architecture'' — first pass handles `boot.files` (filesystem-scanned), second pass handles `tiddlywiki.files`-loaded tiddlers
+* ''Title priority'' — frontmatter `title` > existing clean title (from `tiddlywiki.files`) > derived from filepath
+* ''Runs before syncer'' — startup module runs `before: ["startup"]` so the syncer's initial snapshot sees already-fixed state
+
+</$fill>
+</$transclude>

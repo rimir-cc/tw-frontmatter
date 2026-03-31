@@ -1,0 +1,35 @@
+created: 20260331120000000
+modified: 20260331120000000
+rdt.order: 4
+rdt.plugin-key: frontmatter
+rdt.plugin-name: frontmatter
+rdt.plugin-subtitle: YAML frontmatter for markdown files
+rdt.section: FAQ
+title: $:/plugins/rimir/frontmatter/doc/faq
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Do I need to set the type on every `.md` file?
+
+No. Any `.md` file with YAML frontmatter (`---` delimiters) is auto-detected at boot. The type `text/x-frontmattered-markdown` only matters for ''saving'' — it tells TiddlyWiki to use YAML frontmatter format instead of `.meta` sidecar.
+
+!! Why does the plugin suppress syncer events?
+
+Without suppression, the syncer sees the re-parsed tiddlers as "changed" and tries to delete the original files and re-save them. This corrupts the `.md` files by replacing YAML frontmatter with TiddlyWiki's native format.
+
+!! Why two passes?
+
+Pass 1 handles files discovered by TiddlyWiki's boot scanner (in `boot.files`). Pass 2 handles tiddlers loaded via `tiddlywiki.files` directives — these don't appear in `boot.files` but may still contain YAML frontmatter that needs parsing.
+
+!! Can I use frontmatter with `tiddlywiki.files`?
+
+Yes. Define a `tiddlywiki.files` entry with a clean title. The frontmatter plugin's Pass 2 detects the YAML block and re-parses the fields while keeping the assigned title.
+
+!! What happens to existing `text/x-markdown` tiddlers?
+
+They are unaffected. The plugin only processes files that have YAML frontmatter blocks. Regular markdown tiddlers continue to use `.meta` sidecars.
+
+</$fill>
+</$transclude>

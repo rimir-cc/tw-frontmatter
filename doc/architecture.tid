@@ -1,0 +1,52 @@
+created: 20260331120000000
+modified: 20260331120000000
+rdt.order: 2
+rdt.plugin-key: frontmatter
+rdt.plugin-name: frontmatter
+rdt.plugin-subtitle: YAML frontmatter for markdown files
+rdt.section: Architecture
+title: $:/plugins/rimir/frontmatter/doc/architecture
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Module overview
+
+|!Module |!Type |!Purpose |
+|`startup.js` |startup |Auto-detection, re-parse, save pipeline patches |
+|`deserializer.js` |tiddlerdeserializer |Parses YAML frontmatter from `.md` content |
+|`parser.js` |parser |Renders `text/x-frontmattered-markdown` as markdown (strips frontmatter) |
+|`yaml.js` |library |YAML parse/serialize (tags and list as arrays) |
+
+!! Boot sequence
+
+# TiddlyWiki boot scans `tiddlers/` — `.md` files without `.meta` get absolute filepath as title
+# `startup.js` runs (`after: load-modules`, `before: startup, filesystem-watcher`)
+# Registers `text/x-frontmattered-markdown` content type
+# ''Pass 1'' — scans `boot.files` for `.md` files with `---` frontmatter pattern
+# Suppresses `enqueueTiddlerEvent` (prevents syncer interference)
+# Re-deserializes each file, determines title, replaces tiddler in wiki store
+# Restores `enqueueTiddlerEvent`
+# ''Pass 2'' — scans wiki tiddlers not in `boot.files` (loaded via `tiddlywiki.files`)
+# Re-parses frontmatter, keeps existing title
+# Syncer starts with correct state — no spurious file operations
+
+!! Title derivation (Pass 1)
+
+Priority order for each re-parsed tiddler:
+
+# ''Frontmatter `title`'' — if YAML frontmatter contains a `title` field, use it
+# ''Existing clean title'' — if boot title is not an absolute path (e.g., set by `tiddlywiki.files`), keep it
+# ''Filepath-derived'' — for absolute-path titles: compute relative path from tiddlers dir, strip `.md`, replace `path.sep` with `/`
+
+!! Save pipeline patches
+
+The startup module patches three functions:
+
+* `generateTiddlerFileInfo` — forces `.md` extension and `application/x-tiddler-frontmatter` disk type for `text/x-frontmattered-markdown` tiddlers
+* `saveTiddlerToFile` — serializes as `---\nYAML\n---\ntext` instead of standard TW format; cleans orphaned `.meta` files
+* `saveTiddlerToFileSync` — synchronous variant of the above
+
+</$fill>
+</$transclude>

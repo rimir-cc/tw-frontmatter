@@ -1,4 +1,5 @@
 title: $:/plugins/rimir/frontmatter/changelog
 
 |!Version |!Date |!Changes |
+|0.1.1 |2026-03-31 |Auto-detect any `.md` with frontmatter, syncer-safe re-parse, two-pass architecture, smart title derivation, doc-template docs |
 |0.1.0 |2026-03-30 |Initial release: YAML frontmatter for markdown files |

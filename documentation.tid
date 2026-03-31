@@ -1,10 +1,14 @@
 title: $:/plugins/rimir/frontmatter/documentation
+type: text/vnd.tiddlywiki
 
-<$list filter="[[$:/plugins/rimir/doc-template/documentation-tab]is[tiddler]]" variable="ignore">
-{{$:/plugins/rimir/doc-template/documentation-tab}}
+<$list filter="[[$:/plugins/rimir/doc-template]plugin-type[plugin]]" variable="ignore">
+{{$:/plugins/rimir/frontmatter/doc/overview||$:/plugins/rimir/doc-template/doc-viewer}}
 </$list>
-<$list filter="[[$:/plugins/rimir/doc-template/documentation-tab]!is[tiddler]]" variable="ignore">
 
-> ''doc-template'' plugin is not installed. Please refer to the //readme// tab for documentation.
+<$list filter="[[$:/plugins/rimir/doc-template]plugin-type[plugin]!match[plugin]]" variable="ignore">
+<div class="rr-settings-info-card">
 
+''doc-template'' plugin is not installed. See the <<tag readme>> tab for documentation.
+
+</div>
 </$list>

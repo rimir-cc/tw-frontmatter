@@ -1,0 +1,53 @@
+created: 20260331120000000
+modified: 20260331120000000
+rdt.order: 3
+rdt.plugin-key: frontmatter
+rdt.plugin-name: frontmatter
+rdt.plugin-subtitle: YAML frontmatter for markdown files
+rdt.section: Reference
+title: $:/plugins/rimir/frontmatter/doc/reference
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Content type
+
+|!Type |!Purpose |
+|`text/x-frontmattered-markdown` |Tiddler type — triggers YAML frontmatter serialization on save |
+|`application/x-tiddler-frontmatter` |Internal disk type — used by save pipeline patches |
+
+!! YAML field handling
+
+|!Field |!YAML format |
+|`tags` |Array: `tags:\n  - tag1\n  - tag2` |
+|`list` |Array: `list:\n  - item1\n  - item2` |
+|`title` |Excluded from frontmatter (derived from tiddler title) |
+|`text` |Excluded from frontmatter (appears after `---` closing delimiter) |
+|All other fields |Scalar: `field-name: value` |
+
+!! Frontmatter format
+
+```
+---
+tags:
+  - tag1
+  - tag2
+custom-field: value
+type: text/x-frontmattered-markdown
+---
+
+Markdown body text here
+```
+
+!! Restart rules
+
+|!Change |!Restart? |
+|`startup.js` |Yes |
+|`deserializer.js` |Yes |
+|`parser.js` |Yes |
+|`yaml.js` |Yes |
+|New `.md` files added to tiddlers/ |No (filesystem-watcher picks them up) |
+
+</$fill>
+</$transclude>

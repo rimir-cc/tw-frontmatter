@@ -13,7 +13,7 @@ the deserializer was available.
 
 exports.name = "frontmatter";
 exports.after = ["load-modules"];
-exports.before = ["filesystem-watcher"];
+exports.before = ["startup","filesystem-watcher"];
 exports.synchronous = true;
 
 var FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
@@ -52,10 +52,10 @@ exports.startup = function() {
 			if(path.extname(fileInfo.filepath) !== ".md") {
 				return;
 			}
-			// Read the file and check for frontmatter with our content type
+			// Read the file and check for YAML frontmatter pattern
 			try {
 				var content = fs.readFileSync(fileInfo.filepath, "utf8");
-				if(FRONTMATTER_RE.test(content) && content.indexOf("type: " + CONTENT_TYPE) !== -1) {
+				if(FRONTMATTER_RE.test(content)) {
 					titlesToReparse.push({
 						oldTitle: title,
 						filepath: fileInfo.filepath,
@@ -66,26 +66,71 @@ exports.startup = function() {
 				// File may have been deleted — skip
 			}
 		});
+		var tiddlersPath = path.resolve($tw.boot.wikiTiddlersPath || path.join($tw.boot.wikiPath, "tiddlers"));
+		var reparsedCount = 0;
+		// Suppress change events during re-parse so the syncer doesn't
+		// delete original files and re-save them with TW serialization
+		var origEnqueue = $tw.wiki.enqueueTiddlerEvent;
+		$tw.wiki.enqueueTiddlerEvent = function() {};
 		for(var i = 0; i < titlesToReparse.length; i++) {
 			var item = titlesToReparse[i];
-			// Re-deserialize with the now-registered deserializer
-			var tiddlers = $tw.wiki.deserializeTiddlers(CONTENT_TYPE, item.content, {});
-			if(tiddlers.length > 0) {
-				var newFields = tiddlers[0];
-				// Remove old tiddler (was titled by filepath)
-				$tw.wiki.deleteTiddler(item.oldTitle);
-				delete $tw.boot.files[item.oldTitle];
-				// Add new tiddler with proper fields
+			var tiddlerList = $tw.wiki.deserializeTiddlers(CONTENT_TYPE, item.content, {});
+			if(tiddlerList.length > 0) {
+				var newFields = tiddlerList[0];
+				// Determine title: frontmatter title > existing clean title > derive from filepath
+				var newTitle = newFields.title;
+				if(!newTitle) {
+					if(path.isAbsolute(item.oldTitle)) {
+						// Boot assigned an absolute filepath as title — derive clean relative title
+						var rel = path.relative(tiddlersPath, item.filepath);
+						newTitle = rel.replace(/\.md$/, "").split(path.sep).join("/");
+					} else {
+						// Already has a clean title (e.g., from tiddlywiki.files) — keep it
+						newTitle = item.oldTitle;
+					}
+				}
+				newFields.title = newTitle;
+				// Remove old tiddler, add new one (change events suppressed)
+				if(item.oldTitle !== newTitle) {
+					$tw.wiki.deleteTiddler(item.oldTitle);
+					delete $tw.boot.files[item.oldTitle];
+				}
 				$tw.wiki.addTiddler(new $tw.Tiddler(newFields));
-				// Update boot.files mapping
-				var newTitle = newFields.title || item.oldTitle;
 				$tw.boot.files[newTitle] = {
 					filepath: item.filepath,
 					type: CONTENT_TYPE,
 					hasMetaFile: false
 				};
-				logger.log("Re-parsed: " + newTitle);
+				reparsedCount++;
 			}
+		}
+		// Restore change events
+		$tw.wiki.enqueueTiddlerEvent = origEnqueue;
+		if(reparsedCount > 0) {
+			logger.log("Re-parsed " + reparsedCount + " frontmatter .md files");
+		}
+		// --- B2. Re-parse markdown tiddlers loaded via tiddlywiki.files (not in boot.files) ---
+		var wikiToReparse = [];
+		$tw.wiki.each(function(tiddler, title) {
+			if($tw.boot.files[title]) {
+				return; // Already handled above
+			}
+			var text = tiddler.fields.text || "";
+			if(FRONTMATTER_RE.test(text)) {
+				wikiToReparse.push({title: title, text: text});
+			}
+		});
+		for(var w = 0; w < wikiToReparse.length; w++) {
+			var wItem = wikiToReparse[w];
+			var wTiddlers = $tw.wiki.deserializeTiddlers(CONTENT_TYPE, wItem.text, {});
+			if(wTiddlers.length > 0) {
+				var wFields = wTiddlers[0];
+				wFields.title = wItem.title;
+				$tw.wiki.addTiddler(new $tw.Tiddler(wFields));
+			}
+		}
+		if(wikiToReparse.length > 0) {
+			logger.log("Re-parsed " + wikiToReparse.length + " in-wiki frontmatter tiddlers");
 		}
 	}
 
