@@ -3,9 +3,13 @@
     "description": "Embed tiddler fields as YAML frontmatter in markdown files",
     "name": "frontmatter",
     "author": "rimir",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "core-version": ">=5.3.0",
     "source": "https://github.com/rimir-cc/tw-frontmatter",
     "plugin-type": "plugin",
-    "list": "readme documentation settings changelog license"
+    "list": "readme documentation settings changelog license",
+    "dependents": "$:/plugins/rimir/theme",
+    "soft-dependents": [
+        "$:/plugins/rimir/doc-template"
+    ]
 }
