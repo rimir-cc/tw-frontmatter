@@ -75,9 +75,16 @@ exports.parse = function(yamlText) {
 exports.serialize = function(fields) {
 	var lines = [];
 	var keys = Object.keys(fields).sort();
+	// `title` MUST be persisted into the YAML — the filename is a lossy
+	// reflection of the tiddler title (TW translates `:` → `_` and other
+	// filesystem-invalid characters), so deriving the title back from the
+	// filepath at load time corrupts tiddlers whose title contains such
+	// characters. `text` is the body; `type` is implicit (the file is `.md`
+	// and the deserializer assigns text/x-frontmattered-markdown). `bag` is
+	// TW-internal sync state and irrelevant on disk.
 	for(var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		if(key === "title" || key === "text" || key === "type" || key === "bag") {
+		if(key === "text" || key === "type" || key === "bag") {
 			continue;
 		}
 		var value = fields[key];

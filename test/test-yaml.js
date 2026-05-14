@@ -117,16 +117,28 @@ describe("frontmatter yaml.serialize", function() {
 		expect(result).toContain("caption: Test");
 	});
 
-	it("should exclude title, text, type, and bag fields", function() {
+	it("should exclude text, type, and bag fields but persist title", function() {
+		// `title` MUST round-trip through YAML: the filename can't represent
+		// every title character (TW translates `:` etc. on save), so we lose
+		// information if the title isn't written into the file body.
 		var result = yaml.serialize({
 			title: "MyTitle", text: "body", type: "text/x-frontmattered-markdown",
 			bag: "default", author: "rimir"
 		});
-		expect(result).not.toContain("title:");
+		expect(result).toContain("title: MyTitle");
 		expect(result).not.toContain("text:");
 		expect(result).not.toContain("type:");
 		expect(result).not.toContain("bag:");
 		expect(result).toContain("author: rimir");
+	});
+
+	it("should quote titles that contain colons or other YAML-reserved characters", function() {
+		var result = yaml.serialize({
+			title: "work/mgm/partnerships/ps:open_text/x.msg.email",
+			author: "rimir"
+		});
+		// title must come through with the colons intact (quoted).
+		expect(result).toMatch(/title: ["']work\/mgm\/partnerships\/ps:open_text\/x\.msg\.email["']/);
 	});
 
 	it("should sort keys alphabetically", function() {
