@@ -135,4 +135,24 @@ describe("frontmatter deserializer", function() {
 		expect(fields.title).toBe("Test");
 		expect(fields.text).toBe("Some text\n---\nMore text");
 	});
+
+	it("should preserve an unparseable date string instead of dropping the field", function() {
+		// `created: "soon"` is not TW-format and `new Date("soon")` is Invalid.
+		// The contract: pass it through unchanged rather than emit "Invalid Date"
+		// or silently drop the field — the user can fix it later.
+		var text = "---\ntitle: Quirky\ncreated: soon\n---\nBody";
+		var fields = {};
+		deserialize(text, fields);
+		expect(fields.created).toBe("soon");
+	});
+
+	it("should not fabricate a date when frontmatter has an empty date field", function() {
+		// `created:` (no value after colon) — round-trip safety: the resulting
+		// field must either be empty or absent, never `Invalid Date` or `NaN`.
+		var text = "---\ntitle: Empty\ncreated:\n---\nBody";
+		var fields = {};
+		deserialize(text, fields);
+		// Whatever the exact shape (undefined or ""), it must not be a parsed-but-invalid date.
+		expect(fields.created === undefined || fields.created === "").toBe(true);
+	});
 });
