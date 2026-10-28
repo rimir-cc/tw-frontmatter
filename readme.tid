@@ -14,6 +14,7 @@ Store tiddler metadata as YAML frontmatter directly inside `.md` files — no `.
 * ''All markdown types'' — `text/markdown`, `text/x-markdown` and `text/x-frontmattered-markdown` are all saved as a single `.md` file
 * ''Orphan cleanup'' — automatic removal of orphaned `.meta` files when migrating
 * ''Filesystem-watcher compatible'' — live external edits work seamlessly
+* ''Extension hooks'' — other plugins can take over the YAML ↔ field mapping and the file path (used by `rimir/okf` for the Open Knowledge Format); see Documentation → Reference
 
 !! Prerequisites
 

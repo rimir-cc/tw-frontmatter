@@ -44,6 +44,7 @@ At boot, the startup module auto-detects ''any'' `.md` file with a `---` YAML fr
 * ''Syncer suppression'' — change events are suppressed during re-parse to prevent the syncer from deleting originals and re-saving in TW format
 * ''Two-pass architecture'' — first pass handles `boot.files` (filesystem-scanned), second pass handles `tiddlywiki.files`-loaded tiddlers
 * ''Title priority'' — frontmatter `title` > existing clean title (from `tiddlywiki.files`) > derived from filepath
+* ''Extensible, not configurable'' — the YAML mapping is fixed and flat; plugins with other needs (e.g. `rimir/okf`) take over through three hooks instead of options here
 * ''Runs before syncer'' — startup module runs `before: ["startup"]` so the syncer's initial snapshot sees already-fixed state
 
 </$fill>

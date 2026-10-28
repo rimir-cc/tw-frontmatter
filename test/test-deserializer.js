@@ -8,7 +8,11 @@ Tests for the frontmatter deserializer module.
 \*/
 "use strict";
 
+var helpers = require("$:/plugins/rimir/frontmatter/test/helpers.js");
+
 describe("frontmatter deserializer", function() {
+
+	helpers.isolateHooks(beforeEach, afterEach);
 
 	var deserialize;
 

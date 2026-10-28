@@ -9,6 +9,8 @@ Node only — exercises real file writes in a temp directory.
 \*/
 "use strict";
 
+var helpers = require("$:/plugins/rimir/frontmatter/test/helpers.js");
+
 if($tw.node) {
 
 var fs = require("fs");
@@ -16,6 +18,8 @@ var os = require("os");
 var path = require("path");
 
 describe("frontmatter save pipeline", function() {
+
+	helpers.isolateHooks(beforeEach, afterEach);
 
 	var dir;
 

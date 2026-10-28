@@ -15,7 +15,8 @@ type: text/vnd.tiddlywiki
 
 |!Module |!Type |!Purpose |
 |`startup.js` |startup |Auto-detection, re-parse, save pipeline patches |
-|`deserializer.js` |tiddlerdeserializer |Parses YAML frontmatter from `.md` content |
+|`document.js` |library |Parses / builds `--- YAML ---` documents; invokes the parse and serialize hooks |
+|`deserializer.js` |tiddlerdeserializer |Registers `text/x-frontmattered-markdown`; delegates to `document.js` |
 |`parser.js` |parser |Renders `text/x-frontmattered-markdown` as markdown (strips frontmatter) |
 |`yaml.js` |library |YAML parse/serialize (tags and list as arrays) |
 
@@ -47,6 +48,18 @@ The startup module patches three functions:
 * `generateTiddlerFileInfo` — forces `.md` extension and `application/x-tiddler-frontmatter` disk type for markdown tiddlers (`text/x-frontmattered-markdown`, `text/markdown`, `text/x-markdown`)
 * `saveTiddlerToFile` — serializes as `---\nYAML\n---\ntext` instead of standard TW format; cleans orphaned `.meta` files
 * `saveTiddlerToFileSync` — synchronous variant of the above
+
+The `boot.files` entry of a re-parsed file keeps its other properties (`isEditableFile`, `originalpath`), so `retain-original-tiddler-path` and `tiddlywiki.files` paths keep working.
+
+!! Extension points
+
+```
+load   .md ──► document.parse ── flat yaml.parse ──► th-frontmatter-parse ──► fields
+save   tiddler ──► generateTiddlerFileInfo ──► th-frontmatter-fileinfo ──► fileInfo
+               └─► document.build ── yaml.serialize ──► th-frontmatter-serialize ──► ---\nYAML\n---\ntext
+```
+
+Without registered hooks the pipeline behaves exactly as before. See Reference → Extension hooks for signatures.
 
 </$fill>
 </$transclude>

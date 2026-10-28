@@ -33,6 +33,10 @@ Pass 1 handles files discovered by TiddlyWiki's boot scanner (in `boot.files`). 
 
 Yes. Define a `tiddlywiki.files` entry with a clean title. The frontmatter plugin's Pass 2 detects the YAML block and re-parses the fields while keeping the assigned title.
 
+!! Can another plugin change how fields are mapped to YAML?
+
+Yes — via the hooks `th-frontmatter-parse`, `th-frontmatter-serialize` and `th-frontmatter-fileinfo` (see Reference → Extension hooks). `rimir/okf` uses them to read and write Open Knowledge Format files: it parses the raw YAML itself (nested maps, flow lists), maps OKF keys to fields and keeps files at their concept path. Frontmatter itself is unchanged when no hook is registered.
+
 !! What happens to existing `text/x-markdown` tiddlers?
 
 Existing `.md` + `.md.meta` pairs load as before. The next time such a tiddler is saved, it is rewritten as a single frontmatter `.md` (keeping its `text/markdown` / `text/x-markdown` type in the YAML) and the `.meta` sidecar is deleted.

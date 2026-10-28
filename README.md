@@ -12,6 +12,17 @@ Store tiddler metadata as YAML frontmatter directly inside `.md` files — no `.
 - **All markdown types** — `text/markdown`, `text/x-markdown` and `text/x-frontmattered-markdown` are all saved as a single `.md` file
 - **Orphan cleanup** — automatic removal of orphaned `.meta` files when migrating
 - **Filesystem-watcher compatible** — live external edits work seamlessly
+- **Extension hooks** — other plugins can take over the YAML ↔ field mapping and the file path (used by `rimir/okf` for the Open Knowledge Format)
+
+## Extension hooks
+
+| Hook | Called | Arguments | Must return |
+|---|---|---|---|
+| `th-frontmatter-parse` | after a document's `---` block is split off | `fields`, `{yaml, body, parsed, filepath, pathTitle}` | `fields` |
+| `th-frontmatter-serialize` | before a frontmatter file is written | `yamlText`, `tiddler`, `{fileInfo, pathTitle}` | `yamlText` |
+| `th-frontmatter-fileinfo` | when the file of a frontmatter tiddler is chosen | `fileInfo`, `tiddler`, `options` | `fileInfo` |
+
+Register them with `$tw.hooks.addHook` in a startup module that runs `before: ["frontmatter"]`, so the boot re-parse already uses them. A hook must always return its first argument (possibly changed) — returning `undefined` breaks the chain.
 
 ## Prerequisites
 

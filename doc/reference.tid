@@ -43,6 +43,29 @@ title: "Title: with colon"
 Markdown body text here
 ```
 
+!! Extension hooks
+
+Other plugins can take over how frontmatter maps YAML to fields and where files go. `rimir/okf` (Open Knowledge Format) is built on these hooks.
+
+|!Hook |!Called |!Arguments |!Must return |
+|`th-frontmatter-parse` |After a document's `---` block is split off and flat-parsed (boot re-parse, deserializer, `deserializeTiddlers`) |`fields` — result of the flat parse incl. `text`; `info` — `{yaml, body, parsed, filepath, pathTitle}` |`fields` (may be a new object) |
+|`th-frontmatter-serialize` |Before a frontmatter `.md` file is written (async and sync saver) |`yamlText` — frontmatter's own YAML; `tiddler`; `info` — `{fileInfo, pathTitle}` |`yamlText` (without the `---` lines) |
+|`th-frontmatter-fileinfo` |When `generateTiddlerFileInfo` handles a tiddler saved as frontmatter |`fileInfo` — `.md`, no `.meta`; `tiddler`; `options` — as passed to `generateTiddlerFileInfo` (`directory`, `fileInfo` of the existing file, `wiki`, …) |`fileInfo` |
+
+|!Info key |!Meaning |
+|`yaml` |Raw YAML text between the `---` lines — parse it yourself when the flat parse isn't enough (nested maps, flow lists) |
+|`body` |Text after the closing `---` |
+|`parsed` |Flat parse result — the keys frontmatter added to `fields` |
+|`filepath` |File being loaded; only set during the boot re-parse |
+|`pathTitle` |Title the file's path yields (path relative to `tiddlers/`, minus `.md`, `/` as separator), i.e. the title a file gets when its YAML names none; `undefined` when unknown |
+
+Rules:
+
+* Register the hooks with `$tw.hooks.addHook` in a startup module with `before: ["frontmatter"]` — the boot re-parse runs inside frontmatter's startup
+* Always return the first argument (changed or not). `invokeHook` passes each return value on; `undefined` breaks the chain
+* The hooks only fire for markdown tiddlers and frontmatter documents; text without a `---` block never reaches `th-frontmatter-parse`
+* After the parse hook, a missing `type` is still set to `text/x-frontmattered-markdown`
+
 !! Restart rules
 
 |!Change |!Restart? |
@@ -50,6 +73,7 @@ Markdown body text here
 |`deserializer.js` |Yes |
 |`parser.js` |Yes |
 |`yaml.js` |Yes |
+|`document.js` |Yes |
 |New `.md` files added to tiddlers/ |No (filesystem-watcher picks them up) |
 
 </$fill>

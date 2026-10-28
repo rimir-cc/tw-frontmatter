@@ -16,7 +16,6 @@ exports.after = ["load-modules"];
 exports.before = ["startup","filesystem-watcher"];
 exports.synchronous = true;
 
-var FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 var FILE_ON_DISK_TYPE = "application/x-tiddler-frontmatter";
 var CONTENT_TYPE = require("$:/plugins/rimir/frontmatter/yaml.js").DEFAULT_TYPE;
 // Tiddler types saved as frontmatter .md (core would otherwise write .md + .md.meta)
@@ -40,9 +39,23 @@ exports.startup = function() {
 
 	var path = require("path");
 	var fs = require("fs");
-	var yaml = require("$:/plugins/rimir/frontmatter/yaml.js");
+	var doc = require("$:/plugins/rimir/frontmatter/document.js");
 
 	var logger = new $tw.utils.Logger("frontmatter", {colour: "cyan"});
+	var tiddlersPath = path.resolve($tw.boot.wikiTiddlersPath || path.join($tw.boot.wikiPath, "tiddlers"));
+
+	// Title a file inside the tiddlers dir gets when its frontmatter names none
+	function titleFromPath(filepath) {
+		var rel = path.relative(tiddlersPath, filepath);
+		if(!rel || rel.indexOf("..") === 0 || path.isAbsolute(rel)) {
+			return undefined;
+		}
+		return rel.replace(/\.md$/, "").split(path.sep).join("/");
+	}
+
+	function buildContent(tiddler, fileInfo) {
+		return doc.build(tiddler, {fileInfo: fileInfo, pathTitle: titleFromPath(fileInfo.filepath)});
+	}
 
 	// --- B. Re-parse boot-loaded .md files with frontmatter ---
 
@@ -58,9 +71,10 @@ exports.startup = function() {
 			// Read the file and check for YAML frontmatter pattern
 			try {
 				var content = fs.readFileSync(fileInfo.filepath, "utf8");
-				if(FRONTMATTER_RE.test(content)) {
+				if(doc.hasFrontmatter(content)) {
 					titlesToReparse.push({
 						oldTitle: title,
+						fileInfo: fileInfo,
 						filepath: fileInfo.filepath,
 						content: content
 					});
@@ -69,7 +83,6 @@ exports.startup = function() {
 				// File may have been deleted — skip
 			}
 		});
-		var tiddlersPath = path.resolve($tw.boot.wikiTiddlersPath || path.join($tw.boot.wikiPath, "tiddlers"));
 		var reparsedCount = 0;
 		// Suppress change events during re-parse so the syncer doesn't
 		// delete original files and re-save them with TW serialization
@@ -77,35 +90,26 @@ exports.startup = function() {
 		$tw.wiki.enqueueTiddlerEvent = function() {};
 		for(var i = 0; i < titlesToReparse.length; i++) {
 			var item = titlesToReparse[i];
-			var tiddlerList = $tw.wiki.deserializeTiddlers(CONTENT_TYPE, item.content, {});
-			if(tiddlerList.length > 0) {
-				var newFields = tiddlerList[0];
-				// Determine title: frontmatter title > existing clean title > derive from filepath
-				var newTitle = newFields.title;
-				if(!newTitle) {
-					if(path.isAbsolute(item.oldTitle)) {
-						// Boot assigned an absolute filepath as title — derive clean relative title
-						var rel = path.relative(tiddlersPath, item.filepath);
-						newTitle = rel.replace(/\.md$/, "").split(path.sep).join("/");
-					} else {
-						// Already has a clean title (e.g., from tiddlywiki.files) — keep it
-						newTitle = item.oldTitle;
-					}
-				}
-				newFields.title = newTitle;
-				// Remove old tiddler, add new one (change events suppressed)
-				if(item.oldTitle !== newTitle) {
-					$tw.wiki.deleteTiddler(item.oldTitle);
-					delete $tw.boot.files[item.oldTitle];
-				}
-				$tw.wiki.addTiddler(new $tw.Tiddler(newFields));
-				$tw.boot.files[newTitle] = {
-					filepath: item.filepath,
-					type: CONTENT_TYPE,
-					hasMetaFile: false
-				};
-				reparsedCount++;
+			// Title if the frontmatter doesn't name one: an absolute boot title is
+			// derived from the path; a clean one (e.g., from tiddlywiki.files) is kept
+			var pathTitle = path.isAbsolute(item.oldTitle) ? titleFromPath(item.filepath) : item.oldTitle;
+			var newFields = doc.parse(item.content, {}, {filepath: item.filepath, pathTitle: pathTitle});
+			var newTitle = newFields.title || pathTitle || item.oldTitle;
+			newFields.title = newTitle;
+			// Remove old tiddler, add new one (change events suppressed)
+			if(item.oldTitle !== newTitle) {
+				$tw.wiki.deleteTiddler(item.oldTitle);
+				delete $tw.boot.files[item.oldTitle];
 			}
+			$tw.wiki.addTiddler(new $tw.Tiddler(newFields));
+			// Keep the rest of the entry (isEditableFile/originalpath from
+			// retain-original-tiddler-path or tiddlywiki.files)
+			$tw.boot.files[newTitle] = $tw.utils.extend({}, item.fileInfo, {
+				filepath: item.filepath,
+				type: CONTENT_TYPE,
+				hasMetaFile: false
+			});
+			reparsedCount++;
 		}
 		// Restore change events
 		$tw.wiki.enqueueTiddlerEvent = origEnqueue;
@@ -119,18 +123,15 @@ exports.startup = function() {
 				return; // Already handled above
 			}
 			var text = tiddler.fields.text || "";
-			if(FRONTMATTER_RE.test(text)) {
+			if(doc.hasFrontmatter(text)) {
 				wikiToReparse.push({title: title, text: text});
 			}
 		});
 		for(var w = 0; w < wikiToReparse.length; w++) {
 			var wItem = wikiToReparse[w];
-			var wTiddlers = $tw.wiki.deserializeTiddlers(CONTENT_TYPE, wItem.text, {});
-			if(wTiddlers.length > 0) {
-				var wFields = wTiddlers[0];
-				wFields.title = wItem.title;
-				$tw.wiki.addTiddler(new $tw.Tiddler(wFields));
-			}
+			var wFields = doc.parse(wItem.text, {}, {pathTitle: wItem.title});
+			wFields.title = wItem.title;
+			$tw.wiki.addTiddler(new $tw.Tiddler(wFields));
 		}
 		if(wikiToReparse.length > 0) {
 			logger.log("Re-parsed " + wikiToReparse.length + " in-wiki frontmatter tiddlers");
@@ -149,6 +150,7 @@ exports.startup = function() {
 			if(path.extname(fileInfo.filepath) !== ".md") {
 				fileInfo.filepath = fileInfo.filepath.replace(/\.[^.]+$/, ".md");
 			}
+			fileInfo = $tw.hooks.invokeHook("th-frontmatter-fileinfo", fileInfo, tiddler, options);
 		}
 		return fileInfo;
 	};
@@ -158,8 +160,7 @@ exports.startup = function() {
 	var origSaveTiddlerToFile = $tw.utils.saveTiddlerToFile;
 	$tw.utils.saveTiddlerToFile = function(tiddler, fileInfo, callback) {
 		if(fileInfo.type === FILE_ON_DISK_TYPE) {
-			var yamlStr = yaml.serialize(tiddler.fields);
-			var content = "---\n" + yamlStr + "\n---\n" + (tiddler.fields.text || "");
+			var content = buildContent(tiddler, fileInfo);
 			$tw.utils.createDirectory(path.dirname(fileInfo.filepath));
 			fs.writeFile(fileInfo.filepath, content, "utf8", function(err) {
 				if(err) {
@@ -190,8 +191,7 @@ exports.startup = function() {
 	var origSaveTiddlerToFileSync = $tw.utils.saveTiddlerToFileSync;
 	$tw.utils.saveTiddlerToFileSync = function(tiddler, fileInfo) {
 		if(fileInfo.type === FILE_ON_DISK_TYPE) {
-			var yamlStr = yaml.serialize(tiddler.fields);
-			var content = "---\n" + yamlStr + "\n---\n" + (tiddler.fields.text || "");
+			var content = buildContent(tiddler, fileInfo);
 			$tw.utils.createDirectory(path.dirname(fileInfo.filepath));
 			fs.writeFileSync(fileInfo.filepath, content, "utf8");
 			// Clean up orphaned .meta file if it exists
