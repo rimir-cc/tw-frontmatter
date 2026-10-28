@@ -20,7 +20,7 @@ The frontmatter plugin lets `.md` files carry their tiddler metadata as YAML fro
 
 !! How it works
 
-When a tiddler has type `text/x-frontmattered-markdown`, it is saved to disk as:
+When a tiddler has a markdown type (`text/x-frontmattered-markdown`, `text/markdown` or `text/x-markdown`), it is saved to disk as a single `.md` file (no `.meta` sidecar):
 
 ```
 ---
@@ -29,7 +29,7 @@ tags:
   - example
 created: "20260330120000000"
 modified: "20260330120000000"
-type: text/x-frontmattered-markdown
+title: Example
 ---
 
 # Markdown content here
@@ -39,6 +39,7 @@ At boot, the startup module auto-detects ''any'' `.md` file with a `---` YAML fr
 
 !! Key design decisions
 
+* ''All markdown types'' — core would save `text/markdown` / `text/x-markdown` as `.md` + `.md.meta`; the plugin writes them as frontmatter `.md` too, persisting `type` so it round-trips
 * ''Auto-detect over opt-in'' — any `.md` with frontmatter is re-parsed, not just files with `text/x-frontmattered-markdown`
 * ''Syncer suppression'' — change events are suppressed during re-parse to prevent the syncer from deleting originals and re-saving in TW format
 * ''Two-pass architecture'' — first pass handles `boot.files` (filesystem-scanned), second pass handles `tiddlywiki.files`-loaded tiddlers

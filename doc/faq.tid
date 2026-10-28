@@ -11,9 +11,15 @@ type: text/vnd.tiddlywiki
 <$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
 <$fill $name="body">
 
+!! I installed the plugin but tiddlers are still saved as `.md` + `.md.meta`
+
+Restart the server. The save hooks are installed by a server-side startup module, which only runs at boot — installing the plugin from the browser makes it visible there, but the running server keeps saving the old way. Check the server log for `frontmatter: Frontmatter plugin initialized`. On Windows, make sure the old `node` process is really gone (a leftover process keeps serving the port).
+
+Also required: the official `tiddlywiki/markdown` plugin.
+
 !! Do I need to set the type on every `.md` file?
 
-No. Any `.md` file with YAML frontmatter (`---` delimiters) is auto-detected at boot. The type `text/x-frontmattered-markdown` only matters for ''saving'' — it tells TiddlyWiki to use YAML frontmatter format instead of `.meta` sidecar.
+No. Any `.md` file with YAML frontmatter (`---` delimiters) is auto-detected at boot. On save, any markdown type (`text/x-frontmattered-markdown`, `text/markdown` or `text/x-markdown`) is written as YAML frontmatter instead of a `.meta` sidecar.
 
 !! Why does the plugin suppress syncer events?
 
@@ -29,7 +35,7 @@ Yes. Define a `tiddlywiki.files` entry with a clean title. The frontmatter plugi
 
 !! What happens to existing `text/x-markdown` tiddlers?
 
-They are unaffected. The plugin only processes files that have YAML frontmatter blocks. Regular markdown tiddlers continue to use `.meta` sidecars.
+Existing `.md` + `.md.meta` pairs load as before. The next time such a tiddler is saved, it is rewritten as a single frontmatter `.md` (keeping its `text/markdown` / `text/x-markdown` type in the YAML) and the `.meta` sidecar is deleted.
 
 </$fill>
 </$transclude>

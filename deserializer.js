@@ -52,7 +52,7 @@ exports["text/x-frontmattered-markdown"] = function(text, fields) {
 		fields.text = text;
 	}
 	if(!fields.type) {
-		fields.type = "text/x-frontmattered-markdown";
+		fields.type = yaml.DEFAULT_TYPE;
 	}
 	return [fields];
 };

@@ -44,7 +44,7 @@ Priority order for each re-parsed tiddler:
 
 The startup module patches three functions:
 
-* `generateTiddlerFileInfo` — forces `.md` extension and `application/x-tiddler-frontmatter` disk type for `text/x-frontmattered-markdown` tiddlers
+* `generateTiddlerFileInfo` — forces `.md` extension and `application/x-tiddler-frontmatter` disk type for markdown tiddlers (`text/x-frontmattered-markdown`, `text/markdown`, `text/x-markdown`)
 * `saveTiddlerToFile` — serializes as `---\nYAML\n---\ntext` instead of standard TW format; cleans orphaned `.meta` files
 * `saveTiddlerToFileSync` — synchronous variant of the above
 

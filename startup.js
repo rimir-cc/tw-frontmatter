@@ -18,7 +18,10 @@ exports.synchronous = true;
 
 var FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 var FILE_ON_DISK_TYPE = "application/x-tiddler-frontmatter";
-var CONTENT_TYPE = "text/x-frontmattered-markdown";
+var CONTENT_TYPE = require("$:/plugins/rimir/frontmatter/yaml.js").DEFAULT_TYPE;
+// Tiddler types saved as frontmatter .md (core would otherwise write .md + .md.meta)
+var SAVED_AS_FRONTMATTER = {"text/x-markdown": true, "text/markdown": true};
+SAVED_AS_FRONTMATTER[CONTENT_TYPE] = true;
 
 exports.startup = function() {
 	// --- A. Register content type and parser mapping (runs on all platforms) ---
@@ -139,8 +142,7 @@ exports.startup = function() {
 	var origGenerateTiddlerFileInfo = $tw.utils.generateTiddlerFileInfo;
 	$tw.utils.generateTiddlerFileInfo = function(tiddler, options) {
 		var fileInfo = origGenerateTiddlerFileInfo.apply(this, arguments);
-		var tiddlerType = tiddler.fields.type;
-		if(tiddlerType === CONTENT_TYPE) {
+		if(SAVED_AS_FRONTMATTER[tiddler.fields.type]) {
 			fileInfo.type = FILE_ON_DISK_TYPE;
 			fileInfo.hasMetaFile = false;
 			// Ensure .md extension

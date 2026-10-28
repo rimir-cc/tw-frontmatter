@@ -9,6 +9,7 @@ Store tiddler metadata as YAML frontmatter directly inside `.md` files — no `.
 - **Syncer-safe** — change events suppressed during re-parse to prevent file corruption
 - **Two-pass re-parse** — handles both boot-loaded files and `tiddlywiki.files` entries
 - **YAML serialization** — tags and list fields serialized as YAML arrays
+- **All markdown types** — `text/markdown`, `text/x-markdown` and `text/x-frontmattered-markdown` are all saved as a single `.md` file
 - **Orphan cleanup** — automatic removal of orphaned `.meta` files when migrating
 - **Filesystem-watcher compatible** — live external edits work seamlessly
 
@@ -16,10 +17,11 @@ Store tiddler metadata as YAML frontmatter directly inside `.md` files — no `.
 
 - TiddlyWiki 5.3.0+ (Node.js server edition)
 - The official `tiddlywiki/markdown` plugin (for rendering)
+- **Restart the server after installing** — the plugin hooks into server-side saving, which only takes effect at boot
 
 ## Quick Start
 
-1. Set a tiddler's type to `text/x-frontmattered-markdown`
+1. Give a tiddler a markdown type — `text/x-frontmattered-markdown`, `text/markdown` or `text/x-markdown`
 2. The tiddler is saved as a `.md` file with YAML frontmatter on disk
 3. Or place any `.md` file with YAML frontmatter in your tiddlers directory — it is auto-detected at boot
 

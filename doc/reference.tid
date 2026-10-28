@@ -14,7 +14,8 @@ type: text/vnd.tiddlywiki
 !! Content type
 
 |!Type |!Purpose |
-|`text/x-frontmattered-markdown` |Tiddler type — triggers YAML frontmatter serialization on save |
+|`text/x-frontmattered-markdown` |Default tiddler type for frontmatter `.md` files — assigned on load when the YAML has no `type` |
+|`text/markdown`, `text/x-markdown` |Also saved as frontmatter `.md` (instead of core's `.md` + `.md.meta`); `type` is persisted in the YAML |
 |`application/x-tiddler-frontmatter` |Internal disk type — used by save pipeline patches |
 
 !! YAML field handling
@@ -22,9 +23,11 @@ type: text/vnd.tiddlywiki
 |!Field |!YAML format |
 |`tags` |Array: `tags:\n  - tag1\n  - tag2` |
 |`list` |Array: `list:\n  - item1\n  - item2` |
-|`title` |Excluded from frontmatter (derived from tiddler title) |
+|`title` |Persisted — the filename can't represent every title character (TW maps `:` etc. to `_`) |
+|`type` |Omitted when `text/x-frontmattered-markdown` (implied); persisted for other markdown types |
+|`bag` |Excluded (sync-internal) |
 |`text` |Excluded from frontmatter (appears after `---` closing delimiter) |
-|All other fields |Scalar: `field-name: value` |
+|All other fields |Scalar: `field-name: value`. Values with YAML-reserved characters are double-quoted; `\` and `"` inside are backslash-escaped and unescaped again on load |
 
 !! Frontmatter format
 
@@ -34,7 +37,7 @@ tags:
   - tag1
   - tag2
 custom-field: value
-type: text/x-frontmattered-markdown
+title: "Title: with colon"
 ---
 
 Markdown body text here

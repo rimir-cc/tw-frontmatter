@@ -3,4 +3,4 @@ caption: Frontmatter
 
 This plugin has no configurable settings.
 
-To use frontmatter for a markdown tiddler, set its type to `text/x-frontmattered-markdown`.
+Every markdown tiddler (`text/x-frontmattered-markdown`, `text/markdown` or `text/x-markdown`) is saved as a single `.md` file with YAML frontmatter.

@@ -132,6 +132,11 @@ describe("frontmatter yaml.serialize", function() {
 		expect(result).toContain("author: rimir");
 	});
 
+	it("should persist type when it is not the default frontmatter type", function() {
+		expect(yaml.serialize({title: "T", type: "text/markdown"})).toContain("type: text/markdown");
+		expect(yaml.serialize({title: "T", type: "text/x-markdown"})).toContain("type: text/x-markdown");
+	});
+
 	it("should quote titles that contain colons or other YAML-reserved characters", function() {
 		var result = yaml.serialize({
 			title: "work/mgm/partnerships/ps:open_text/x.msg.email",
@@ -239,5 +244,45 @@ describe("frontmatter yaml round-trip", function() {
 		var serialized = yaml.serialize({modified: "20250315143000000"});
 		var parsed = yaml.parse(serialized);
 		expect(parsed.modified).toBe("20250315143000000");
+	});
+
+	it("should round-trip values containing double quotes and backslashes", function() {
+		var original = {title: 'Say "hi" \\ there', path: "C:\\dir\\file", mixed: '\\"'};
+		var parsed = yaml.parse(yaml.serialize(original));
+		expect(parsed.title).toBe(original.title);
+		expect(parsed.path).toBe(original.path);
+		expect(parsed.mixed).toBe(original.mixed);
+	});
+
+	it("should be stable across repeated save/load cycles", function() {
+		var title = 'Quote " and backslash \\';
+		var fields = {title: title};
+		for(var i = 0; i < 3; i++) {
+			fields = yaml.parse(yaml.serialize(fields));
+		}
+		expect(fields.title).toBe(title);
+	});
+
+	it("should round-trip non-default markdown types", function() {
+		var parsed = yaml.parse(yaml.serialize({title: "T", type: "text/markdown"}));
+		expect(parsed.type).toBe("text/markdown");
+	});
+});
+
+describe("frontmatter yaml.parse escapes", function() {
+
+	it("should unescape \\\" and \\\\ inside double-quoted values", function() {
+		var result = yaml.parse('a: "x\\"y\\\\z"');
+		expect(result.a).toBe('x"y\\z');
+	});
+
+	it("should keep backslashes literal in single-quoted values", function() {
+		var result = yaml.parse("a: 'x\\y'");
+		expect(result.a).toBe("x\\y");
+	});
+
+	it("should keep backslashes literal in unquoted values", function() {
+		var result = yaml.parse("a: x\\y");
+		expect(result.a).toBe("x\\y");
 	});
 });

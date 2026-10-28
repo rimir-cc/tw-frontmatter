@@ -11,6 +11,11 @@ Handles string values and arrays (for tags). No nested objects.
 "use strict";
 
 /**
+ * Tiddler type assigned to frontmatter .md files when none is stored in the YAML.
+ */
+var DEFAULT_TYPE = exports.DEFAULT_TYPE = "text/x-frontmattered-markdown";
+
+/**
  * Characters that require quoting in YAML values.
  */
 var NEEDS_QUOTING = /[:#\[\]{}&*!|>'"%@`\r\n]|^[\s-]|[\s]$/;
@@ -70,7 +75,7 @@ exports.parse = function(yamlText) {
 
 /**
  * Serialize a tiddler fields object to YAML frontmatter string.
- * Excludes "text" and "bag" fields.
+ * Excludes "text", "bag" and a default "type".
  */
 exports.serialize = function(fields) {
 	var lines = [];
@@ -79,12 +84,13 @@ exports.serialize = function(fields) {
 	// reflection of the tiddler title (TW translates `:` → `_` and other
 	// filesystem-invalid characters), so deriving the title back from the
 	// filepath at load time corrupts tiddlers whose title contains such
-	// characters. `text` is the body; `type` is implicit (the file is `.md`
-	// and the deserializer assigns text/x-frontmattered-markdown). `bag` is
-	// TW-internal sync state and irrelevant on disk.
+	// characters. `text` is the body; `type` is only persisted when it isn't
+	// DEFAULT_TYPE (which the deserializer assigns), so text/markdown and
+	// text/x-markdown keep their type. `bag` is TW-internal sync state and
+	// irrelevant on disk.
 	for(var i = 0; i < keys.length; i++) {
 		var key = keys[i];
-		if(key === "text" || key === "type" || key === "bag") {
+		if(key === "text" || key === "bag" || (key === "type" && fields.type === DEFAULT_TYPE)) {
 			continue;
 		}
 		var value = fields[key];
@@ -121,11 +127,14 @@ exports.serialize = function(fields) {
 
 /**
  * Remove surrounding quotes from a YAML value.
+ * Double-quoted values have the escapes written by quote() reversed.
  */
 function unquote(value) {
 	if(value.length >= 2) {
-		if((value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') ||
-		   (value.charAt(0) === "'" && value.charAt(value.length - 1) === "'")) {
+		if(value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') {
+			return value.substring(1, value.length - 1).replace(/\\(["\\])/g, "$1");
+		}
+		if(value.charAt(0) === "'" && value.charAt(value.length - 1) === "'") {
 			return value.substring(1, value.length - 1);
 		}
 	}
